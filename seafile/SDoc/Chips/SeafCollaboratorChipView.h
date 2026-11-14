@@ -4,9 +4,12 @@
 
 #import <UIKit/UIKit.h>
 
+@class SeafConnection;
+
 NS_ASSUME_NONNULL_BEGIN
 
 @interface SeafCollaboratorChipView : UIView
+@property (nonatomic, weak, nullable) SeafConnection *connection;
 - (void)configureWithName:(NSString *)name avatarURL:(NSString * _Nullable)avatarURL;
 @end
 

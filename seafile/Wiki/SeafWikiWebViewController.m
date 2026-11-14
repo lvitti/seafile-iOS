@@ -6,6 +6,7 @@
 //
 
 #import "SeafWikiWebViewController.h"
+#import "SeafHeaderSessionManager.h"
 #import "SeafWebViewBridge.h"
 #import "SeafSafariStyleToolbar.h"
 #import <WebKit/WebKit.h>
@@ -475,8 +476,9 @@
             [request setValue:userAgent forHTTPHeaderField:@"User-Agent"];
         }
 
-        NSURLSession *session = [NSURLSession sessionWithConfiguration:config];
-        NSURLSessionDownloadTask *task = [session downloadTaskWithRequest:request completionHandler:^(NSURL *location, NSURLResponse *response, NSError *error) {
+        SeafHeaderSessionManager *manager = [[SeafHeaderSessionManager alloc] initWithBaseURL:nil sessionConfiguration:config];
+        manager.headerStore = ^SeafCustomHeaders *{ return wself.connection.customHeaderStore; };
+        NSURLSessionDownloadTask *task = [manager rawDownloadTaskWithRequest:request completionHandler:^(NSURL *location, NSURLResponse *response, NSError *error) {
             NSInteger status = [response isKindOfClass:[NSHTTPURLResponse class]] ? ((NSHTTPURLResponse *)response).statusCode : 0;
             NSURL *destURL = nil;
             if (!error && location && status < 400) {
@@ -500,8 +502,9 @@
                     [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to download file", @"Seafile")];
                 }
             });
-            [session finishTasksAndInvalidate];
+            [manager invalidateSessionCancelingTasks:NO resetSession:NO];
         }];
+        if (!task) [manager invalidateSessionCancelingTasks:NO resetSession:NO];
         [task resume];
     }];
 }

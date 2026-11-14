@@ -8,6 +8,7 @@
 	</array>
 	<key>keychain-access-groups</key>
 	<array>
+		<string>$(AppIdentifierPrefix)com.seafile.custom-headers</string>
 		<string>$(AppIdentifierPrefix)com.seafile.seafilePro.SeafAction</string>
 	</array>
 </dict>

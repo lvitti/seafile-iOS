@@ -1,0 +1,38 @@
+name: Custom HTTP headers
+on:
+  push:
+    branches: [feat/advanced-custom-http-headers]
+  pull_request:
+    paths:
+      - 'Pod/Classes/SeafCustomHeaders.*'
+      - 'Pod/Classes/SeafHeaderSessionManager.*'
+      - 'seafile/SeafAdvancedSettingsViewController.*'
+      - 'Tests/CustomHeaders/**'
+      - '.github/workflows/custom-http-headers.yml'
+permissions:
+  contents: read
+jobs:
+  policy:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Check production Objective-C header policy
+        run: Tests/CustomHeaders/run.sh
+      - name: Read the project's AFNetworking version for syntax checks
+        uses: actions/checkout@v4
+        with:
+          repository: AFNetworking/AFNetworking
+          ref: ffae2391ab0c29dc88eb0a58d2f5b2c2c27cadbf
+          path: vendor-afnetworking
+          persist-credentials: false
+      - name: Compile new iOS sources for syntax and API signatures
+        run: |
+          sdk=$(xcrun --sdk iphonesimulator --show-sdk-path)
+          xcrun clang -target x86_64-apple-ios16.0-simulator -isysroot "$sdk" \
+            -fobjc-arc -fmodules -fsyntax-only -Werror=implicit-function-declaration \
+            -I Pod/Classes -I vendor-afnetworking \
+            Pod/Classes/SeafCustomHeaders.m \
+            Pod/Classes/SeafHeaderSessionManager.m \
+            seafile/SeafAdvancedSettingsViewController.m

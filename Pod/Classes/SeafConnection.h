@@ -13,6 +13,7 @@
 #import "SeafPhotoBackupTool.h"
 #import "ExtentedString.h"
 @class SeafFile;
+@class SeafCustomHeaders;
 
 #define HTTP_ERR_UNAUTHORIZED                    401
 #define HTTP_ERR_FORBIDDEN                       403
@@ -100,6 +101,8 @@ extern NSNotificationName const SeafServerInfoUpdatedNotification;
 
 
 @interface SeafConnection: NSObject
+
+@property (nonatomic, readonly) SeafCustomHeaders *customHeaderStore;
 
 
 @property (readonly, retain) NSMutableDictionary * _Nonnull info;///< General information about the connection.
@@ -216,7 +219,8 @@ extern NSNotificationName const SeafServerInfoUpdatedNotification;
             failure:(void (^ _Nullable)(NSURLRequest * _Nonnull request, NSHTTPURLResponse * _Nullable response, id _Nullable JSON, NSError * _Nullable error))failure;
 
 /**
- * Sends a prepared NSURLRequest without modifying headers or injecting tokens.
+ * Sends a prepared NSURLRequest without injecting Seafile tokens.
+ * Custom headers are applied only when the URL matches this account’s HTTPS origin.
  * Use this to call external services (e.g., Seadoc) with their own Authorization headers
  * while still leveraging the shared AFNetworking stack (TLS, timeout, JSON serializer).
  */

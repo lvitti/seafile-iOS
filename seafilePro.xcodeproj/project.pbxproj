@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		CF7A00000000000000000003 /* SeafAdvancedSettingsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = CF7A00000000000000000002 /* SeafAdvancedSettingsViewController.m */; };
 		07AA1F25181CFB0B481FA1AF /* SeafFPStore.m in Sources */ = {isa = PBXBuildFile; fileRef = C7F1131E20E3AC3977438A0A /* SeafFPStore.m */; };
 		1234A1AA0526579332B5E703 /* libPods-SeafShare.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5DA126D224400B6A8E752C31 /* libPods-SeafShare.a */; };
 		191136FB3E23E08CD24606D5 /* SeafSafariStyleToolbar.m in Sources */ = {isa = PBXBuildFile; fileRef = 28EF956E7A5925DC49342E0B /* SeafSafariStyleToolbar.m */; };
@@ -992,6 +993,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		CF7A00000000000000000001 /* SeafAdvancedSettingsViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafAdvancedSettingsViewController.h; sourceTree = "<group>"; };
+		CF7A00000000000000000002 /* SeafAdvancedSettingsViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafAdvancedSettingsViewController.m; sourceTree = "<group>"; };
 		0EE70A5E47E895A61EB0595A /* SeafShareBaseListViewController.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = SeafShareBaseListViewController.h; sourceTree = "<group>"; };
 		140D0309790357E13344B734 /* SeafFPIdentifier.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = SeafFPIdentifier.h; sourceTree = "<group>"; };
 		159E0D2A7419F67E532A240F /* libPods-SeafAction.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-SeafAction.a"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -1625,6 +1628,8 @@
 				571617B81BE39FBD00792316 /* SeafPhoto.m */,
 				5764C829163BF91B006AD511 /* SeafSettingsViewController.h */,
 				5764C82A163BF91B006AD511 /* SeafSettingsViewController.m */,
+				CF7A00000000000000000001 /* SeafAdvancedSettingsViewController.h */,
+				CF7A00000000000000000002 /* SeafAdvancedSettingsViewController.m */,
 				F5CBCDBE1F2C2F1500E8C35B /* SeafSyncInfoViewController.h */,
 				F5CBCDBF1F2C2F1500E8C35B /* SeafSyncInfoViewController.m */,
 				F536DA161F30DB6F00F2EF3F /* SeafSyncInfoCell.h */,
@@ -3486,6 +3491,7 @@
 				571617B91BE39FBD00792316 /* SeafPhoto.m in Sources */,
 				58D40A6A1E9AF72200A68BEF /* SeafDbCacheProvider.m in Sources */,
 				571D8CD21677881400F1A22C /* SeafSettingsViewController.m in Sources */,
+				CF7A00000000000000000003 /* SeafAdvancedSettingsViewController.m in Sources */,
 				571D8CD41677881400F1A22C /* SeafStarredFilesViewController.m in Sources */,
 				BAF4369C2EA7623C0002ECD1 /* SeafDocCommentContentItem.m in Sources */,
 				BAF316E72EC626C400CEFD54 /* SeafMentionSheetViewController.m in Sources */,

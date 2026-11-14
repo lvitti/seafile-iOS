@@ -22,6 +22,8 @@
 #import "SeafAccountTaskQueue.h"
 #import "SeafTheme.h"
 #import "SeafNavigationBarStyler.h"
+#import "SeafAdvancedSettingsViewController.h"
+#import "SeafCustomHeaders.h"
 
 
 #define HTTP @"http://"
@@ -198,6 +200,21 @@
     [SVProgressHUD showWithStatus:NSLocalizedString(@"Connecting to server", @"Seafile")];
 }
 
+- (void)openAdvancedSettings
+{
+    [self.view endEditing:YES];
+    NSString *url = [NSString stringWithFormat:@"%@%@", self.prefixLabel.text, self.serverTextField.text ?: @""];
+    NSString *username = self.usernameTextField.text ?: @"";
+    if (self.type == ACCOUNT_SHIBBOLETH || !username.length ||
+        ![SeafCustomHeaders URL:[NSURL URLWithString:url] matchesServer:url]) {
+        [self alertWithTitle:NSLocalizedString(@"Enter an HTTPS server and a username before configuring custom headers.", nil)];
+        return;
+    }
+    SeafCustomHeaders *store = [[SeafCustomHeaders alloc] initWithServer:url username:username];
+    SeafAdvancedSettingsViewController *controller = [[SeafAdvancedSettingsViewController alloc] initWithHeaderStore:store];
+    [self.navigationController pushViewController:controller animated:YES];
+}
+
 - (CGSize)getSizeForText:(NSString *)text maxWidth:(CGFloat)width font:(UIFont*)font  {
     CGSize constraintSize;
     constraintSize.height = MAXFLOAT;
@@ -227,6 +244,7 @@
     }
     UIBarButtonItem *cancelItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCancel target:self action:@selector(cancel:)];
     self.navigationItem.leftBarButtonItem = cancelItem;
+    self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Advanced", nil) style:UIBarButtonItemStylePlain target:self action:@selector(openAdvancedSettings)];
 
     loginButton.layer.borderColor = [[SeafTheme primarySurface] CGColor];
     loginButton.layer.borderWidth = 0.0f;
