@@ -1,3 +1,5 @@
+#import "SeafConnection.h"
+#import "SeafHeaderSessionManager.h"
 //  SeafCollaboratorChipView.m
 //  Reusable capsule view for collaborator display (avatar + name).
 
@@ -112,7 +114,8 @@ static NSCache<NSString *, UIImage *> *SeafChipAvatarCache(void)
         return;
     }
 
-    UIImage *cached = [SeafChipAvatarCache() objectForKey:avatarURL];
+    NSString *cacheKey = [NSString stringWithFormat:@"%@|%@", self.connection.accountIdentifier ?: @"", avatarURL];
+    UIImage *cached = [SeafChipAvatarCache() objectForKey:cacheKey];
     if (cached) {
         self.avatarView.image = cached;
         return;
@@ -123,11 +126,12 @@ static NSCache<NSString *, UIImage *> *SeafChipAvatarCache(void)
     if (!url) return;
 
     __weak typeof(self) wself = self;
-    self.avatarTask = [[NSURLSession sharedSession] dataTaskWithURL:url completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
+    if (!self.connection) return;
+    self.avatarTask = [(SeafHeaderSessionManager *)self.connection.sessionMgr rawDataTaskWithRequest:[NSURLRequest requestWithURL:url] completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
         if (error || data.length == 0) return;
         UIImage *img = [UIImage imageWithData:data scale:[UIScreen mainScreen].scale];
         if (!img) return;
-        [SeafChipAvatarCache() setObject:img forKey:avatarURL];
+        [SeafChipAvatarCache() setObject:img forKey:cacheKey];
         dispatch_async(dispatch_get_main_queue(), ^{
             __strong typeof(wself) sself = wself; if (!sself) return;
             if ([sself.avatarURLString isEqualToString:avatarURL]) {

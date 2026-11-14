@@ -4,6 +4,7 @@
 #import "SeafAppDelegate.h"
 #import "SeafSdocProfileEditorViewController.h"
 #import "SeafTagChipView.h"
+#import "SeafCollaboratorChipCell.h"
 #import "SeafSdocService.h"
 #import <objc/runtime.h>
 #import <objc/message.h>
@@ -42,6 +43,7 @@
 @end
 
 @interface SeafInlineChipsDataSource : NSObject <UICollectionViewDataSource, UICollectionViewDelegateFlowLayout>
+@property (nonatomic, weak) SeafConnection *connection;
 @property (nonatomic, copy) NSString *type;
 @property (nonatomic, strong) NSArray *vals;
 @end
@@ -53,6 +55,7 @@
     NSDictionary *item = self.vals[indexPath.item];
     if ([self.type isEqualToString:@"collaborator"]) {
         UICollectionViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"collab" forIndexPath:indexPath];
+        if ([cell isKindOfClass:SeafCollaboratorChipCell.class]) ((SeafCollaboratorChipCell *)cell).connection = self.connection;
         NSString *name = item[@"user_name"] ?: @"";
         NSString *avatar = item[@"avatar"] ?: @"";
         if ([cell respondsToSelector:@selector(configureWithName:avatarURL:)]) {
@@ -498,6 +501,7 @@ static NSSet *SeafChipTypes(void)
         __block NSArray *vals = values;
         __weak typeof(cv) weakCV = cv;
         SeafInlineChipsDataSource *ds = [SeafInlineChipsDataSource new];
+        ds.connection = self.connection;
         ds.type = type;
         ds.vals = vals;
         [self.chipDataSources addObject:ds];

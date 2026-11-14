@@ -1,3 +1,4 @@
+#import "SeafHeaderSessionManager.h"
 //  SeafBackgroundTaskManager.m
 //  Pods
 //
@@ -149,21 +150,13 @@
     NSBlockOperation *op = [NSBlockOperation new];
     __weak NSBlockOperation *wop = op;
     [op addExecutionBlock:^{
-        NSURLSessionConfiguration *cfg = [NSURLSessionConfiguration defaultSessionConfiguration];
-        cfg.timeoutIntervalForRequest = 15.0;
-        cfg.timeoutIntervalForResource = 30.0;
-        // Inject a Seafile-specific User-Agent so comment image requests are identifiable on the server side.
-        NSString *_commentAppVer = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleShortVersionString"] ?: @"unknown";
-        cfg.HTTPAdditionalHeaders = @{ @"User-Agent": [NSString stringWithFormat:@"Seafile iOS/%@", _commentAppVer] };
-        NSURLSession *session = [NSURLSession sessionWithConfiguration:cfg];
         dispatch_semaphore_t sema = dispatch_semaphore_create(0);
         __block UIImage *img = nil;
-        NSURLSessionDataTask *task = [session dataTaskWithRequest:req completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
+        NSURLSessionDataTask *task = [(SeafHeaderSessionManager *)conn.sessionMgr rawDataTaskWithRequest:req completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
             if (!error && data.length > 0) {
                 img = [UIImage imageWithData:data];
             }
             dispatch_semaphore_signal(sema);
-            [session finishTasksAndInvalidate];
         }];
         [task resume];
         // Wait until finished or cancelled

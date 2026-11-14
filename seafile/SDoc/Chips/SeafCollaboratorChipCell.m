@@ -34,6 +34,7 @@
 
 - (void)configureWithName:(NSString *)name avatarURL:(NSString *)avatarURL
 {
+    self.chipView.connection = self.connection;
     [self.chipView configureWithName:name avatarURL:avatarURL];
 }
 

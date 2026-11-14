@@ -1296,6 +1296,7 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
     for (NSDictionary *info in userInfos) {
         SeafCollaboratorChipView *chip = [[SeafCollaboratorChipView alloc] init];
         chip.translatesAutoresizingMaskIntoConstraints = NO;
+        chip.connection = self.connection;
         [chip configureWithName:info[@"name"] avatarURL:info[@"avatar"]];
         [wrapper addSubview:chip];
         [chips addObject:chip];

@@ -15,6 +15,7 @@
 #import "SeafAppDelegate.h"
 #import "SeafDetailViewController.h"
 #import "SeafSettingsViewController.h"
+#import "SeafAdvancedSettingsViewController.h"
 #import "SeafDirViewController.h"
 #import "SeafSyncInfoViewController.h"
 #import "SeafRepos.h"
@@ -45,6 +46,7 @@ enum {
     SECTION_CACHE,
     SECTION_ENC,
     SECTION_DISPLAY,
+    SECTION_ADVANCED,
     SECTION_ABOUT,
     SECTION_LOGOUT,
 };
@@ -674,13 +676,11 @@ enum {
 }
 
 /// Maps a logical section index to the corresponding storyboard section index.
-/// SECTION_DISPLAY is fully programmatic (no storyboard counterpart),
-/// so sections after it are shifted by -1.
+/// Display and Advanced have no storyboard counterpart.
 - (NSInteger)storyboardSectionForSection:(NSInteger)section {
-    if (section > SECTION_DISPLAY) {
-        return section - 1;
-    }
-    return section;
+    // Display and Advanced are programmatic; neither exists in a storyboard.
+    NSInteger offset = (section > SECTION_DISPLAY ? 1 : 0) + (section > SECTION_ADVANCED ? 1 : 0);
+    return section - offset;
 }
 
 - (NSIndexPath *)storyboardIndexPathForIndexPath:(NSIndexPath *)indexPath {
@@ -692,7 +692,7 @@ enum {
 }
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    return [super numberOfSectionsInTableView:tableView] + 1;
+    return [super numberOfSectionsInTableView:tableView] + 2;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
@@ -700,7 +700,7 @@ enum {
     if (section == SECTION_WIKI && ![self shouldShowWikiSection]) {
         return 0;
     }
-    if (section == SECTION_DISPLAY) {
+    if (section == SECTION_DISPLAY || section == SECTION_ADVANCED) {
         return 1;
     }
     NSInteger count = [super tableView:tableView numberOfRowsInSection:[self storyboardSectionForSection:section]];
@@ -717,6 +717,12 @@ enum {
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
+    if (indexPath.section == SECTION_ADVANCED) {
+        UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:nil];
+        cell.textLabel.text = NSLocalizedString(@"Advanced options", nil);
+        cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+        return cell;
+    }
     if ([self isAppearanceIndexPath:indexPath]) {
         return [self appearanceCell];
     }
@@ -731,7 +737,7 @@ enum {
     if (indexPath.section == SECTION_WIKI && ![self shouldShowWikiSection]) {
         return 0;
     }
-    if ([self isAppearanceIndexPath:indexPath] || [self isManageSelectedPhotosIndexPath:indexPath]) {
+    if (indexPath.section == SECTION_ADVANCED || [self isAppearanceIndexPath:indexPath] || [self isManageSelectedPhotosIndexPath:indexPath]) {
         return 50;
     }
     return [super tableView:tableView heightForRowAtIndexPath:[self storyboardIndexPathForIndexPath:indexPath]];
@@ -739,7 +745,7 @@ enum {
 
 - (NSInteger)tableView:(UITableView *)tableView indentationLevelForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    if ([self isAppearanceIndexPath:indexPath] || [self isManageSelectedPhotosIndexPath:indexPath]) {
+    if (indexPath.section == SECTION_ADVANCED || [self isAppearanceIndexPath:indexPath] || [self isManageSelectedPhotosIndexPath:indexPath]) {
         return 1;
     }
     return [super tableView:tableView indentationLevelForRowAtIndexPath:[self storyboardIndexPathForIndexPath:indexPath]];
@@ -794,7 +800,7 @@ enum {
         cell.accessoryType = UITableViewCellAccessoryNone;
     } else
     // Check if this is the logout cell, privacy policy, or manage-selected-photos cell
-    if (indexPath.section == SECTION_LOGOUT ||
+    if (indexPath.section == SECTION_ADVANCED || indexPath.section == SECTION_LOGOUT ||
         (indexPath.section == SECTION_ABOUT && indexPath.row == CELL_PRIVACY) ||
         [self isManageSelectedPhotosIndexPath:indexPath]) {
         // Create a custom accessory view with the chevron shifted 5px to the left
@@ -915,6 +921,11 @@ enum {
     // The visual feedback comes from the row action itself (navigation, alert, etc.)
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
 
+    if (indexPath.section == SECTION_ADVANCED) {
+        SeafAdvancedSettingsViewController *controller = [[SeafAdvancedSettingsViewController alloc] initWithHeaderStore:self.connection.customHeaderStore];
+        [self.navigationController pushViewController:controller animated:YES];
+        return;
+    }
     if (indexPath.section == SECTION_ACCOUNT) {
         if (indexPath.row == 0) {
             Debug("Switch Account");
@@ -1047,6 +1058,7 @@ enum {
         NSLocalizedString(@"Cache", @"Seafile"),
         NSLocalizedString(@"Encrypted Libraries", @"Seafile"),
         NSLocalizedString(@"Display", @"Seafile"),
+        NSLocalizedString(@"Advanced", nil),
         NSLocalizedString(@"About", @"Seafile"),
         @"",
     };
@@ -1119,7 +1131,7 @@ enum {
 
 - (NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section
 {
-    if (section == SECTION_DISPLAY) {
+    if (section == SECTION_DISPLAY || section == SECTION_ADVANCED) {
         return nil;
     }
     return [super tableView:tableView titleForFooterInSection:[self storyboardSectionForSection:section]];
@@ -1127,7 +1139,7 @@ enum {
 
 - (UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section
 {
-    if (section == SECTION_DISPLAY) {
+    if (section == SECTION_DISPLAY || section == SECTION_ADVANCED) {
         return nil;
     }
     return [super tableView:tableView viewForFooterInSection:[self storyboardSectionForSection:section]];

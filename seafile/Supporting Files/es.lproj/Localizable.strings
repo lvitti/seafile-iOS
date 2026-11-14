@@ -1073,3 +1073,33 @@
 "System" = "System";
 "Light" = "Light";
 "Dark" = "Dark";
+
+/* Advanced account settings and custom HTTP headers. */
+"A custom header conflicts with a header required by this request." = "Un header personalizado entra en conflicto con un header requerido por esta petición.";
+"Add header" = "Agregar header";
+"Advanced" = "Avanzado";
+"Advanced options" = "Opciones avanzadas";
+"Custom HTTP headers" = "Headers personalizados";
+"Custom headers" = "Headers personalizados";
+"Custom headers cannot exceed 16 KiB in total." = "Los headers no pueden superar 16 KiB en total.";
+"Custom headers could not be read from Keychain. Unlock the device and try again." = "No se pudieron leer los headers del llavero. Desbloqueá el dispositivo e intentá de nuevo.";
+"Custom headers could not be removed from Keychain." = "No se pudieron eliminar los headers del llavero.";
+"Custom headers could not be saved to Keychain." = "No se pudieron guardar los headers en el llavero.";
+"Delete %@ and its saved value? This cannot be undone." = "¿Eliminar %@ y su valor guardado? No se puede deshacer.";
+"Delete header?" = "¿Eliminar header?";
+"Disabling headers keeps their saved values. You can still edit or delete them." = "Desactivar el envío conserva los valores guardados. Podés seguir editando o eliminando los headers.";
+"Edit header" = "Editar header";
+"Edit header. Swipe left for Delete." = "Editar header. Deslizá hacia la izquierda para eliminarlo.";
+"Enter a header value of up to 4096 bytes." = "Ingresá un valor de hasta 4096 bytes.";
+"Enter an HTTPS server and a username before configuring custom headers." = "Ingresá un servidor HTTPS y un nombre de usuario antes de configurar los headers personalizados.";
+"Header name" = "Nombre del header";
+"Header names must be valid, unique and not reserved by Seafile or HTTP." = "Los nombres deben ser válidos, únicos y no estar reservados por Seafile o HTTP.";
+"Header value" = "Valor del header";
+"Header values cannot contain control characters or unsupported characters." = "Los valores no pueden contener caracteres de control ni caracteres no admitidos.";
+"Invalid custom header." = "El header personalizado no es válido.";
+"No headers configured." = "No hay headers configurados.";
+"Only sent to %@ for this account. Values are saved in this device's Keychain." = "Solo se envían a %@ para esta cuenta. Los valores se guardan en el llavero de este dispositivo.";
+"Send custom headers" = "Enviar headers personalizados";
+"Show value" = "Mostrar valor";
+"The saved custom headers are invalid." = "Los headers guardados no son válidos.";
+"You can save up to 20 custom headers." = "Podés guardar hasta 20 headers personalizados.";

@@ -7,6 +7,8 @@
 //
 
 #import "SeafConnection.h"
+#import "SeafCustomHeaders.h"
+#import "SeafHeaderSessionManager.h"
 #import "SeafRepos.h"
 #import "SeafDir.h"
 #import "SeafAvatar.h"
@@ -114,6 +116,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 @property NSMutableDictionary *settings;
 
 @property BOOL inCheckCert;
+@property (nonatomic, copy) NSString *customHeaderUsername;
 
 @property SeafDir *syncDir;
 @property (readonly) id<SeafCacheProvider> cacheProvider;
@@ -154,7 +157,8 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         // Inject a Seafile-specific User-Agent so all API requests are identifiable on the server side.
         NSString *_appVer = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleShortVersionString"] ?: @"unknown";
         configuration.HTTPAdditionalHeaders = @{ @"User-Agent": [NSString stringWithFormat:@"Seafile iOS/%@", _appVer] };
-        _sessionMgr = [[AFHTTPSessionManager alloc] initWithBaseURL:[NSURL URLWithString:self.address] sessionConfiguration:configuration];
+        _sessionMgr = [[SeafHeaderSessionManager alloc] initWithBaseURL:[NSURL URLWithString:self.address] sessionConfiguration:configuration];
+        [self configureCustomHeadersForManager:(SeafHeaderSessionManager *)_sessionMgr];
         _sessionMgr.responseSerializer = [AFJSONResponseSerializer serializerWithReadingOptions:NSJSONReadingAllowFragments];
         
         //fix "NSLocalizedDescription=Request failed: unacceptable content-type: text/plain} "
@@ -173,6 +177,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 - (id)initWithUrl:(NSString *)url cacheProvider:(id<SeafCacheProvider>)cacheProvider username:(NSString *)username
 {
     self = [self initWithUrl:url cacheProvider:cacheProvider];
+    self.customHeaderUsername = username;
     if (url) {
         NSString *infoKey = [NSString stringWithFormat:@"%@/%@", url, username];
         NSDictionary *ainfo = [SeafStorage.sharedObject objectForKey:infoKey];
@@ -386,7 +391,7 @@ static NSString *const kSeafThumbnailServerAvailableKey = @"thumbnailServerAvail
     // A plain data task on the manager's session: the manager's JSON response
     // serializer would reject the text body, while the session itself still applies
     // the account's certificate policy through its challenge handler.
-    NSURLSessionDataTask *task = [self.sessionMgr.session dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+    NSURLSessionDataTask *task = [(SeafHeaderSessionManager *)self.sessionMgr rawDataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
         __strong typeof(weakSelf) strongSelf = weakSelf;
         if (!strongSelf) return;
         if (error || ![response isKindOfClass:[NSHTTPURLResponse class]]) {
@@ -743,6 +748,18 @@ static NSString *const kSeafThumbnailServerAvailableKey = @"thumbnailServerAvail
     return SeafPolicyFromFile(path);
 }
 
+- (SeafCustomHeaders *)customHeaderStore
+{
+    return [[SeafCustomHeaders alloc] initWithServer:self.address ?: @""
+                                          username:self.customHeaderUsername ?: self.username ?: @""];
+}
+
+- (void)configureCustomHeadersForManager:(SeafHeaderSessionManager *)manager
+{
+    __weak typeof(self) weakSelf = self;
+    manager.headerStore = ^SeafCustomHeaders *{ return weakSelf.customHeaderStore; };
+}
+
 - (AFHTTPSessionManager *)loginMgr
 {
     NSURLSessionConfiguration *configuration = [NSURLSessionConfiguration ephemeralSessionConfiguration];
@@ -751,7 +768,8 @@ static NSString *const kSeafThumbnailServerAvailableKey = @"thumbnailServerAvail
     NSString *_loginAppVer = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleShortVersionString"] ?: @"unknown";
     configuration.HTTPAdditionalHeaders = @{ @"User-Agent": [NSString stringWithFormat:@"Seafile iOS/%@", _loginAppVer] };
 
-    AFHTTPSessionManager *manager = [[AFHTTPSessionManager alloc] initWithSessionConfiguration:configuration];
+    AFHTTPSessionManager *manager = [[SeafHeaderSessionManager alloc] initWithBaseURL:[NSURL URLWithString:self.address] sessionConfiguration:configuration];
+    [self configureCustomHeadersForManager:(SeafHeaderSessionManager *)manager];
     [manager setSessionDidReceiveAuthenticationChallengeBlock:^NSURLSessionAuthChallengeDisposition(NSURLSession *session, NSURLAuthenticationChallenge *challenge, NSURLCredential *__autoreleasing *credential) {
         if ([challenge.protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodServerTrust]) {
             if (SeafStorage.sharedObject.allowInvalidCert) return NSURLSessionAuthChallengeUseCredential;
@@ -893,6 +911,8 @@ static NSString *const kSeafThumbnailServerAvailableKey = @"thumbnailServerAvail
 
 - (void)clearAccount
 {
+    NSError *headerError = nil;
+    if (![self.customHeaderStore remove:&headerError]) Warning(@"Custom header cleanup failed (%ld)", (long)headerError.code);
     [SeafDataTaskManager.sharedObject removeAccountQueue:self];
     [SeafStorage.sharedObject removeObjectForKey:_address];
     [SeafStorage.sharedObject removeObjectForKey:self.accountIdentifier];
@@ -957,6 +977,7 @@ static NSString *const kSeafThumbnailServerAvailableKey = @"thumbnailServerAvail
 
 -(void)setToken:(NSString *)token forUser:(NSString *)username isShib:(BOOL)isshib s2faToken:(NSString*)s2faToken
 {
+    self.customHeaderUsername = username;
     _token = token;
     [Utils dict:_info setObject:username forKey:@"username"];
     [Utils dict:_info setObject:token forKey:@"token"];
@@ -975,6 +996,7 @@ static NSString *const kSeafThumbnailServerAvailableKey = @"thumbnailServerAvail
 
 -(void)showDeserializedError:(NSError *)error
 {
+    if ([[self.customHeaderStore load:nil][@"enabled"] boolValue]) return;
     NSData *data = [error.userInfo objectForKey:@"com.alamofire.serialization.response.error.data"];
     if (data && [data isKindOfClass:[NSData class]]) {
         NSString *str __attribute__((unused)) = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
@@ -987,6 +1009,7 @@ static NSString *const kSeafThumbnailServerAvailableKey = @"thumbnailServerAvail
  */
 - (void)loginWithUsername:(NSString *)username password:(NSString *)password otp:(NSString *)otp rememberDevice:(BOOL)remember
 {
+    self.customHeaderUsername = username;
     NSString *url = _address;
     NSMutableURLRequest *request = [self loginRequest:url username:username password:password];
     if (otp) {
@@ -1010,7 +1033,7 @@ static NSString *const kSeafThumbnailServerAvailableKey = @"thumbnailServerAvail
     } completionHandler:^(NSURLResponse * _Nonnull response, id  _Nullable responseObject, NSError * _Nullable error) {
         NSHTTPURLResponse *resp = (NSHTTPURLResponse *)response;
         if (error) {
-            Warning("Error: %@, response:%@", error, responseObject);
+            Warning("Login failed (%ld)", (long)error.code);
             [self showDeserializedError:error];
             [self.loginDelegate loginFailed:self response:resp error:error];
         } else {
@@ -1080,6 +1103,11 @@ static const int kSeafThumbnailApiSize = SEAF_THUMB_PIXEL_SIZE;
 
 // Private helper method to handle 401 Unauthorized errors
 - (void)handleUnauthorizedErrorResponse:(NSHTTPURLResponse *)response {
+    // An Access gateway can answer 401 before Seafile. Do not destroy the
+    // Seafile session on an ambiguous response when custom headers are active.
+    NSDictionary *profile = [self.customHeaderStore load:nil];
+    if ([profile[@"enabled"] boolValue] && [profile[@"headers"] count] &&
+        ![response valueForHTTPHeaderField:@"X-Seafile-Wiped"]) return;
     NSString *wiped = [response.allHeaderFields objectForKey:@"X-Seafile-Wiped"];
     Debug(@"handleUnauthorizedErrorResponse - wiped: %@ for URL: %@", wiped, response.URL.absoluteString);
     @synchronized(self) {
@@ -1116,7 +1144,7 @@ static const int kSeafThumbnailApiSize = SEAF_THUMB_PIXEL_SIZE;
         NSHTTPURLResponse *resp = (NSHTTPURLResponse *)response;
         if (error) {
             [self showDeserializedError:error];
-            Warning("token=%@, resp=%ld %@, delegate=%@, url=%@, Error: %@", self.token, (long)resp.statusCode, responseObject, self.delegate, url, error);
+            Warning("Request failed: status=%ld, code=%ld", (long)resp.statusCode, (long)error.code);
             failure (request, resp, responseObject, error);
             if (resp.statusCode == HTTP_ERR_UNAUTHORIZED) {
                 [self handleUnauthorizedErrorResponse:resp];
@@ -1150,7 +1178,7 @@ static const int kSeafThumbnailApiSize = SEAF_THUMB_PIXEL_SIZE;
         NSHTTPURLResponse *resp = (NSHTTPURLResponse *)response;
         if (error) {
             [self showDeserializedError:error];
-            Warning("prepared req error: resp=%ld %@, url=%@, Error: %@", (long)resp.statusCode, responseObject, request.URL, error);
+            Warning("Prepared request failed: status=%ld, code=%ld", (long)resp.statusCode, (long)error.code);
             if (failure) failure(request, resp, responseObject, error);
         } else {
             if (success) success(request, resp, responseObject);
